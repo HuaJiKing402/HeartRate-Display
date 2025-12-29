@@ -48,14 +48,15 @@ async fn find_heart_rate_device(adapter: &Adapter) -> Option<Peripheral> {
     let peripherals = adapter.peripherals().await.ok()?;
     for peripheral in peripherals {
         let properties = peripheral.properties().await.ok()??;
-
+        let device_name = properties.local_name.unwrap_or_else(|| "未知设备".to_string());
         // 筛选包含心率服务的设备
         if properties.services.contains(&HEART_RATE_SERVICE_UUID) {
-            let device_name = properties.local_name.unwrap_or_else(|| "未知设备".to_string());
             println!("\n找到心率设备: {}", device_name);
             println!("设备地址: {:?}", peripheral.address());
             return Some(peripheral);
         }
+        println!("\n找到设备: {}", device_name);
+        println!("设备地址: {:?}", peripheral.address());
     }
 
     None
@@ -79,7 +80,8 @@ async fn main() -> Result<()> {
     // 3. 查找心率设备
     println!("正在扫描心率设备...");
     let heart_rate_device = find_heart_rate_device(&adapter).await.ok_or_else(|| {
-        anyhow::anyhow!("未找到心率设备，请确保设备已开启并处于可连接状态")
+        let _ = anyhow::anyhow!("未找到心率设备，请确保设备已开启并处于可连接状态");
+        std::process::exit(1);
     })?;
 
     // 4. 连接设备
